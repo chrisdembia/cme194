@@ -1,12 +1,7 @@
-
-#include <boost/mpi/environment.hpp>
-#include <boost/mpi/communicator.hpp>
 #include <iostream>
 #include <stdio.h>
+#include <mpi.h>
 
-namespace mpi = boost::mpi;
-
-/* Return 1 if 'i'th bit of 'n' is 1; 0 otherwise */
 void check_circuit (int id, int z) {
     int v[16];        /* Each element is a bit of z */
     int i;
@@ -29,12 +24,30 @@ void check_circuit (int id, int z) {
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    mpi::environment env;
-    mpi::communicator world;
-    for (int i = 0; i < world.size(); i++)
+    int rank;
+    int size;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    unsigned int min = 0;
+    unsigned int max = 65535;
+
+    unsigned int lengthOfInterval = max / (size - 1);
+
+    unsigned int start = rank * lengthOfInterval;
+    unsigned int end = std::min(max, (rank + 1) * lengthOfInterval - 1);
+
+    std::cout << start << " " << end << std::endl;
+
+    for (int i = start; i < end; i++)
     {
-        check_circuit(0, world.rank());
+        check_circuit(rank, i);
     }
+
+    MPI_Finalize();
+    return 0;
 }
